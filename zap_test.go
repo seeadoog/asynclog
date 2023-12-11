@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"log/slog"
 
@@ -47,7 +48,12 @@ func Test_Logger(t *testing.T) {
 		Level:    "error",
 		Filename: "./test.log",
 		// Caller:   true,
-		ExtraWriters: []io.Writer{os.Stdout, os.Stderr},
+		ExtraWriters: []io.Writer{os.Stdout},
+
+		ZapEncConf: func(c *zapcore.EncoderConfig) error {
+			c.LevelKey = "lv"
+			return nil
+		},
 	})
 	if err != nil {
 		panic(err)
@@ -55,6 +61,7 @@ func Test_Logger(t *testing.T) {
 	slog := lg.Sugar()
 
 	slog.Errorw("error", "dd", "x", "mm", map[string]any{"xx": "xx"})
+	time.Sleep(1 * time.Second)
 }
 
 func BenchmarkLogger(b *testing.B) {

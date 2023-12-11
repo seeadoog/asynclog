@@ -36,20 +36,25 @@ func newLogger() {
 type Logger = zap.Logger
 
 type LogConf struct {
-	Filename   string `json:"filename"`
-	Level      string `json:"level"`
-	Sync       bool   `json:"sync"`
-	MaxSize    int    `json:"max_size" default:"500"`
-	MaxAge     int    `json:"max_age" default:"30"`
-	MaxBackups int    `json:"max_backups" default:"30"`
-	LocalTime  bool   `json:"local_time"`
-	Compress   bool   `json:"compress"`
-	Caller     bool   `json:"caller"`
-	CallSkip   int    `json:"call_skip"`
+	Filename string `json:"filename"`
+	// log level: error warn info debug panic
+	Level string `json:"level"`
+	// if write log sync
+	Sync       bool `json:"sync"`
+	MaxSize    int  `json:"max_size" default:"500"`
+	MaxAge     int  `json:"max_age" default:"30"`
+	MaxBackups int  `json:"max_backups" default:"30"`
+	LocalTime  bool `json:"local_time"`
+	Compress   bool `json:"compress"`
+	Caller     bool `json:"caller"`
+	CallSkip   int  `json:"call_skip"`
 	//write log to this writer
 	Writer io.Writer `json:"-"`
 	//copy write log to other loggers
 	ExtraWriters []io.Writer `json:"-"`
+
+	ZapEncConf func(c *zapcore.EncoderConfig) error
+	ZapOptions []zap.Option
 }
 
 func (lc *LogConf) init() {
@@ -130,8 +135,17 @@ func NewLogger(lc *LogConf) (*Logger, error) {
 	if lc.CallSkip > 0 {
 		opts = append(opts, zap.AddCallerSkip(lc.CallSkip))
 	}
+	opts = append(opts, lc.ZapOptions...)
+
 	zapConfig := zap.NewProductionEncoderConfig()
 	zapConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+	if lc.ZapEncConf != nil {
+		err := lc.ZapEncConf(&zapConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lw), level), opts...)
 
 	return logger, nil
