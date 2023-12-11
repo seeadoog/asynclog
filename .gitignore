@@ -1,0 +1,8 @@
+
+*.exe
+*.log
+findercache
+*.findercache
+.idea
+.vscode 
+*.iml 		
