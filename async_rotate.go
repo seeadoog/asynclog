@@ -38,22 +38,19 @@ func (a *asyncRotate) getBf() []byte {
 }
 
 func (a *asyncRotate) run() {
+
 	for {
+		select {
+		case buf := <-a.buf:
+			a.w.Write(buf)
+			a.bp.Put(buf)
 
-	bl:
-		buf := <-a.buf
-		a.w.Write(buf)
-		a.bp.Put(buf)
+		default:
+			a.w.Flush()
 
-		for {
-			select {
-			case buf := <-a.buf:
-				a.w.Write(buf)
-				a.bp.Put(buf)
-			default:
-				a.w.Flush()
-				goto bl
-			}
+			buf := <-a.buf
+			a.w.Write(buf)
+			a.bp.Put(buf)
 		}
 	}
 }

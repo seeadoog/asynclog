@@ -68,7 +68,7 @@ func BenchmarkLogger(b *testing.B) {
 	// TODO: Initialize
 	lg, err := NewLogger(&LogConf{
 		Level:    "error",
-		Filename: FileNameDiscard,
+		Filename: "../test.log",
 		// Caller:   true,
 		Sync: false,
 	})
@@ -82,7 +82,7 @@ func BenchmarkLogger(b *testing.B) {
 	slog.Errorw("error", "dd", "x")
 	for i := 0; i < b.N; i++ {
 		// TODO: Your Code Here
-		slog.Errorw("error", "name", "chenjian", "age", 5, "som", "hello world")
+		slog.Errorw("error", "name", "chenjian", "age", 5, "som", "hello worldxlpolgmyjgroojsjdofdsjfds99dsfsdnfndsjfjdsojfosdjfojdsjf")
 	}
 	fmt.Println(logBufferNIl.String())
 }
