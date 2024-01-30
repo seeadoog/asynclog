@@ -35,6 +35,8 @@ func newLogger() {
 
 type Logger = zap.Logger
 
+type SugaredLogger = zap.SugaredLogger
+
 type LogConf struct {
 	Filename string `json:"filename"`
 	// log level: error warn info debug panic
