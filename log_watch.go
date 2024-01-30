@@ -40,7 +40,7 @@ func (l *LogWatch[T]) Get() *T {
 func (l *LogWatch[T]) Update(conf *LogConf) (error, bool) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
-
+	conf.init()
 	if equal(l.conf, conf) {
 		return nil, false
 	}
