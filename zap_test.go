@@ -61,14 +61,18 @@ func Test_Logger(t *testing.T) {
 	slog := lg.Sugar()
 
 	slog.Errorw("error", "dd", "x", "mm", map[string]any{"xx": "xx"})
+	slog.Errorw("error", "dd", "x", "mm", map[string]any{"xx": "xx"})
+	slog.Errorw("error", "dd", "x", "mm", map[string]any{"xx": "xx"})
+	slog.Errorw("error", "dd", "x", "mm", map[string]any{"xx": "xx"})
 	time.Sleep(1 * time.Second)
 }
 
 func BenchmarkLogger(b *testing.B) {
 	// TODO: Initialize
 	lg, err := NewLogger(&LogConf{
-		Level:    "error",
-		Filename: "../test.log",
+		Level: "error",
+		// Filename: "../test.log",
+		Filename: FileNameDiscard,
 		// Caller:   true,
 		Sync: false,
 	})
@@ -85,4 +89,35 @@ func BenchmarkLogger(b *testing.B) {
 		slog.Errorw("error", "name", "chenjian", "age", 5, "som", "hello worldxlpolgmyjgroojsjdofdsjfds99dsfsdnfndsjfjdsojfosdjfojdsjf")
 	}
 	fmt.Println(logBufferNIl.String())
+}
+
+func Test_LogWatch(t *testing.T) {
+	ew := []io.Writer{os.Stdout}
+	lw, err := NewLogWatch[SugaredLogger](&LogConf{
+		Level: "error",
+		// Filename: "../test.log",
+		Filename: FileNameDiscard,
+		// Caller:   true,
+		Sync:         true,
+		ExtraWriters: ew,
+	}, NewSugarLogger)
+	if err != nil {
+		panic(err)
+	}
+
+	lw.Get().Infow("hello world 1 ")
+
+	err, ok := lw.Update(&LogConf{
+		Level: "info",
+		// Filename: "../test.log",
+		Filename: FileNameDiscard,
+		// Caller:   true,
+		Sync:         true,
+		ExtraWriters: ew,
+	})
+
+	fmt.Println(err, ok)
+	fmt.Println()
+	lw.Get().Info("hello world 2")
+
 }
