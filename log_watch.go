@@ -36,11 +36,12 @@ func (l *LogWatch[T]) Get() *T {
 	return l.inst.Load()
 }
 
+// 当配置发生变更时，更新日志
 func (l *LogWatch[T]) Update(conf *LogConf) (error, bool) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
-	if reflect.DeepEqual(l.conf, conf) {
+	if equal(l.conf, conf) {
 		return nil, false
 	}
 
@@ -51,4 +52,13 @@ func (l *LogWatch[T]) Update(conf *LogConf) (error, bool) {
 	l.conf = conf
 	l.inst.Store(log)
 	return nil, true
+}
+
+func equal(a, b *LogConf) bool {
+	return a.Filename == b.Filename &&
+		a.Level == b.Level &&
+		a.Sync == b.Sync &&
+		a.MaxAge == b.MaxAge &&
+		a.MaxBackups == b.MaxBackups &&
+		a.MaxSize == b.MaxSize
 }

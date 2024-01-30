@@ -120,4 +120,15 @@ func Test_LogWatch(t *testing.T) {
 	fmt.Println()
 	lw.Get().Info("hello world 2")
 
+	err, ok = lw.Update(&LogConf{
+		Level: "info",
+		// Filename: "../test.log",
+		Filename: FileNameDiscard,
+		// Caller:   true,
+		Sync:         true,
+		ExtraWriters: ew,
+	})
+
+	fmt.Println(err, ok)
+
 }
