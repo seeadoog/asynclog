@@ -77,6 +77,10 @@ func (lc *LogConf) init() {
 
 }
 
+var (
+	levelNone = zapcore.Level(-5)
+)
+
 func getLevel(s string) (zapcore.Level, error) {
 	switch s {
 	case "debug":
@@ -89,6 +93,10 @@ func getLevel(s string) (zapcore.Level, error) {
 		return zapcore.ErrorLevel, nil
 	case "panic":
 		return zapcore.PanicLevel, nil
+	case "fatal":
+		return zapcore.FatalLevel, nil
+	case "none":
+		return levelNone, nil
 	default:
 		return 0, fmt.Errorf("invalid log level:%s", s)
 	}
@@ -128,6 +136,10 @@ func NewLogger(lc *LogConf) (*Logger, error) {
 	level, err := getLevel(lc.Level)
 	if err != nil {
 		return nil, err
+	}
+
+	if level == levelNone {
+		lw = io.Discard
 	}
 
 	opts := []zap.Option{}

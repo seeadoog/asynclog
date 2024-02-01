@@ -108,9 +108,9 @@ func Test_LogWatch(t *testing.T) {
 	lw.Get().Infow("hello world 1 ")
 
 	err, ok := lw.Update(&LogConf{
-		Level: "info",
-		// Filename: "../test.log",
-		Filename: FileNameDiscard,
+		Level:    "info",
+		Filename: "./test.log",
+		// Filename: FileNameDiscard,
 		// Caller:   true,
 		Sync:         true,
 		ExtraWriters: ew,
@@ -118,17 +118,19 @@ func Test_LogWatch(t *testing.T) {
 
 	fmt.Println(err, ok)
 	fmt.Println()
-	lw.Get().Info("hello world 2")
+	lw.Get().Infow("hello world 2")
 
 	err, ok = lw.Update(&LogConf{
-		Level: "info",
-		// Filename: "../test.log",
-		Filename: FileNameDiscard,
+		Level:    "info",
+		Filename: "./test2.log",
+		// Filename: FileNameDiscard,
 		// Caller:   true,
 		Sync:         true,
 		ExtraWriters: ew,
 	})
 
 	fmt.Println(err, ok)
+
+	lw.Get().Infow("helo3 ")
 
 }
