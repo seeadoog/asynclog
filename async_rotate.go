@@ -20,7 +20,7 @@ func newAsyncRotate(w io.Writer) io.Writer {
 	if !ok {
 		bw = bufio.NewWriterSize(w, 1024*320)
 	}
-	ar := &asyncRotate{w: bw, buf: make(chan []byte, 10000)}
+	ar := &asyncRotate{w: bw, buf: make(chan []byte, 100000)}
 	go ar.run()
 	return ar
 }

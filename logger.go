@@ -123,6 +123,7 @@ func NewLogger(lc *LogConf) (*Logger, error) {
 			Compress:   lc.Compress,
 		}
 		lw = w
+
 	}
 
 	for _, w := range lc.ExtraWriters {

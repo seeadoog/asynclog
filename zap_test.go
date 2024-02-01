@@ -70,9 +70,9 @@ func Test_Logger(t *testing.T) {
 func BenchmarkLogger(b *testing.B) {
 	// TODO: Initialize
 	lg, err := NewLogger(&LogConf{
-		Level: "error",
-		// Filename: "../test.log",
-		Filename: FileNameDiscard,
+		Level:    "none",
+		Filename: "../test.log",
+		// Filename: FileNameDiscard,
 		// Caller:   true,
 		Sync: false,
 	})
