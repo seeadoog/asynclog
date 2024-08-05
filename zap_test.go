@@ -3,22 +3,17 @@ package asynclog
 import (
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"testing"
 	"time"
 
 	"log/slog"
 
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 func Test_newLogger(t *testing.T) {
-	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-		StacktraceKey: "sk",
-	}), zapcore.AddSync(os.Stdout), zapcore.DebugLevel), zap.AddStacktrace(zapcore.ErrorLevel))
-
-	logger.Fatal("tar")
 
 }
 
@@ -48,7 +43,7 @@ func Test_Logger(t *testing.T) {
 		Level:    "error",
 		Filename: "./test.log",
 		// Caller:   true,
-		ExtraWriters: []io.Writer{os.Stdout},
+		ExtraWriters: []io.Writer{NewTcpWriter("127.0.0.1:9000")},
 
 		ZapEncConf: func(c *zapcore.EncoderConfig) error {
 			c.LevelKey = "lv"
@@ -133,4 +128,37 @@ func Test_LogWatch(t *testing.T) {
 
 	lw.Get().Infow("helo3 ")
 
+}
+
+func TestTcpServer(t *testing.T) {
+	ls, err := net.Listen("tcp", "127.0.0.1:9000")
+	if err != nil {
+		panic(err)
+	}
+	defer ls.Close()
+	for {
+		conn, err := ls.Accept()
+		if err != nil {
+			panic(err)
+		}
+		go func() {
+			defer conn.Close()
+			buf := make([]byte, 1024)
+			for {
+				n, err := conn.Read(buf)
+				if err != nil {
+					return
+				}
+				fmt.Println(string(buf[:n]))
+			}
+		}()
+	}
+}
+
+func BenchmarkINT(b *testing.B) {
+	// TODO: Initialize
+
+	for i := 0; i < b.N; i++ {
+		// TODO: Your Code Here
+	}
 }
