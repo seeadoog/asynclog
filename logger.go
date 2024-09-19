@@ -128,6 +128,7 @@ func NewLogger(lc *LogConf) (*Logger, error) {
 
 	for _, w := range lc.ExtraWriters {
 		lw = io.MultiWriter(lw, w)
+
 	}
 
 	if !lc.Sync {

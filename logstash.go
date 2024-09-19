@@ -25,9 +25,6 @@ func (w *logstashWriter) checkConn() net.Conn {
 	if w.conn != nil {
 		return w.conn
 	}
-	if w.conn != nil {
-		return w.conn
-	}
 	//var err error
 	w.conn, w.err = w.dialer()
 	return w.conn

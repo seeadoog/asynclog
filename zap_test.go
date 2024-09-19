@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// elasticsearch
 func Test_newLogger(t *testing.T) {
 
 }
