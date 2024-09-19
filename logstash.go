@@ -1,6 +1,7 @@
 package asynclog
 
 import (
+	"errors"
 	"io"
 	"net"
 )
@@ -12,10 +13,20 @@ type logstashWriter struct {
 }
 
 // async tcp writer
-func NewTcpWriter(addr string) io.Writer {
+func NewTcpWriter(addrs ...string) io.Writer {
+
 	w := &logstashWriter{
-		dialer: func() (net.Conn, error) {
-			return net.Dial("tcp", addr)
+		dialer: func() (conn net.Conn, err error) {
+			if len(addrs) == 0 {
+				return nil, errors.New("no address for tcp writer")
+			}
+			for _, addr := range addrs {
+				conn, err = net.Dial("tcp", addr)
+				if err == nil {
+					return conn, nil
+				}
+			}
+			return
 		},
 	}
 	return AsyncWriter(w)
