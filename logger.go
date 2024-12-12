@@ -20,18 +20,15 @@ const (
 	FileNameStdio   = "stdout"
 )
 
-type logger struct {
-	log zap.Logger
-}
-
-func newLogger() {
-	logger, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
-
-	}
-	logger.Info("hello", zapcore.Field{Key: "name", String: "hello"})
-}
+const (
+	LevelDebug = "debug"
+	LevelInfo  = "info"
+	LevelWarn  = "warn"
+	LevelError = "error"
+	LevelFatal = "fatal"
+	LevelPanic = "panic"
+	LevelNone  = "none"
+)
 
 type Logger = zap.Logger
 
@@ -54,14 +51,17 @@ type LogConf struct {
 	Writer io.Writer `json:"-"`
 	//copy write log to other loggers
 	ExtraWriters []io.Writer `json:"-"`
-
-	ZapEncConf func(c *zapcore.EncoderConfig) error
-	ZapOptions []zap.Option
+	//OnLogLost will be called when log  buffer is full
+	OnLogLost          func([]byte)                         `json:"-"`
+	MaxPendingMessages int                                  `json:"max_pending_messages" default:"10000"`
+	AsyncBufferSize    int                                  `json:"async_buffer_size" default:"320000"`
+	ZapEncConf         func(c *zapcore.EncoderConfig) error `json:"-"`
+	ZapOptions         []zap.Option                         `json:"-"`
 }
 
 func (lc *LogConf) init() {
 	if lc.Level == "" {
-		lc.Level = "info"
+		lc.Level = LevelInfo
 	}
 	if lc.MaxSize <= 0 {
 		lc.MaxSize = 500
@@ -83,19 +83,19 @@ var (
 
 func getLevel(s string) (zapcore.Level, error) {
 	switch s {
-	case "debug":
+	case LevelDebug:
 		return zapcore.DebugLevel, nil
-	case "info":
+	case LevelInfo:
 		return zapcore.InfoLevel, nil
-	case "warn":
+	case LevelWarn:
 		return zapcore.WarnLevel, nil
-	case "error":
+	case LevelError:
 		return zapcore.ErrorLevel, nil
-	case "panic":
+	case LevelPanic:
 		return zapcore.PanicLevel, nil
-	case "fatal":
+	case LevelFatal:
 		return zapcore.FatalLevel, nil
-	case "none":
+	case LevelNone:
 		return levelNone, nil
 	default:
 		return 0, fmt.Errorf("invalid log level:%s", s)
@@ -132,7 +132,11 @@ func NewLogger(lc *LogConf) (*Logger, error) {
 	}
 
 	if !lc.Sync {
-		lw = AsyncWriter(lw)
+		lw = AsyncWriter(lw, func(o *logOptions) {
+			o.onLogLost = lc.OnLogLost
+			o.writerBufferSize = lc.AsyncBufferSize
+			o.maxPendingMessages = lc.MaxPendingMessages
+		})
 	}
 
 	level, err := getLevel(lc.Level)

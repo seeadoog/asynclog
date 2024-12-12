@@ -44,10 +44,14 @@ func Test_Logger(t *testing.T) {
 		Level:    "error",
 		Filename: "./test.log",
 		// Caller:   true,
-		ExtraWriters: []io.Writer{NewTcpWriter("127.0.0.1:9000")},
+		ExtraWriters: []io.Writer{NewTcpWriter([]string{"127.0.0.1:9000"}, func(msg []byte, err error) {
+			fmt.Println(string(msg), err)
+		})},
 
 		ZapEncConf: func(c *zapcore.EncoderConfig) error {
-			c.LevelKey = "lv"
+			c.LevelKey = "L"
+			c.TimeKey = "T"
+			c.MessageKey = "M"
 			return nil
 		},
 	})
@@ -156,6 +160,7 @@ func TestTcpServer(t *testing.T) {
 	}
 }
 
+// 48
 func BenchmarkINT(b *testing.B) {
 	// TODO: Initialize
 

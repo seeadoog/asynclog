@@ -8,25 +8,63 @@ import (
 )
 
 type asyncRotate struct {
-	w   WriteBuffer
-	buf chan []byte
-	bp  sync.Pool
+	w         WriteBuffer
+	buf       chan []byte
+	bp        sync.Pool
+	onLogLost func([]byte)
 }
+
+type logOptions struct {
+	onLogLost          func([]byte)
+	writerBufferSize   int
+	maxPendingMessages int
+}
+
+type logOption func(*logOptions)
 
 // 同步io 转异步 io
 // 达到同步io的即时写入到文件的效果，同时不阻塞写入，但是buffer 满了时会丢失日志
-func newAsyncRotate(w io.Writer) io.Writer {
+func newAsyncRotate(w io.Writer, opts ...logOption) io.Writer {
+	opt := new(logOptions)
+	for _, o := range opts {
+		o(opt)
+	}
+	if opt.maxPendingMessages <= 0 {
+		opt.maxPendingMessages = 10000
+	}
+	if opt.writerBufferSize <= 0 {
+		opt.writerBufferSize = 1024 * 320
+	}
+
 	bw, ok := w.(WriteBuffer)
 	if !ok {
-		bw = bufio.NewWriterSize(w, 1024*320)
+		bw = bufio.NewWriterSize(w, opt.writerBufferSize)
 	}
-	ar := &asyncRotate{w: bw, buf: make(chan []byte, 100000)}
+	ar := &asyncRotate{w: bw, buf: make(chan []byte, opt.maxPendingMessages), onLogLost: opt.onLogLost}
 	go ar.run()
 	return ar
 }
 
-func AsyncWriter(w io.Writer) io.Writer {
-	return newAsyncRotate(w)
+func SetWriterBufferSize(writerBufferSize int) logOption {
+	return func(o *logOptions) {
+		o.writerBufferSize = writerBufferSize
+	}
+}
+
+func SetWriterMaxPendingMessages(maxPendingMessages int) logOption {
+	return func(o *logOptions) {
+		o.maxPendingMessages = maxPendingMessages
+	}
+}
+
+func SetWriterOnLogLost(onLogLost func([]byte)) logOption {
+	return func(o *logOptions) {
+		o.onLogLost = onLogLost
+	}
+}
+
+func AsyncWriter(w io.Writer, opts ...logOption) io.Writer {
+	return newAsyncRotate(w, opts...)
 }
 
 func (a *asyncRotate) getBf() []byte {
@@ -66,8 +104,11 @@ func (a *asyncRotate) Write(p []byte) (n int, err error) {
 	case a.buf <- b:
 	default:
 		// 没有写进去，释放buf
-		a.bp.Put(b)
 		logBufferNIl.Add(1)
+		if a.onLogLost != nil {
+			a.onLogLost(b)
+		}
+		a.bp.Put(b)
 	}
 	return len(p), nil
 }
