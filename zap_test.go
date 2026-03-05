@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,6 +16,29 @@ import (
 
 // elasticsearch
 func Test_newLogger(t *testing.T) {
+
+	lc, err := NewLogger(&LogConf{
+		Level:    "debug",
+		Filename: "test.log",
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 1000; i++ {
+				lc.Error("error log is this")
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+	wg.Wait()
+
+	fmt.Println(flushCount.Load())
 
 }
 

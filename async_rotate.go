@@ -5,6 +5,8 @@ import (
 	"expvar"
 	"io"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 type asyncRotate struct {
@@ -77,21 +79,23 @@ func (a *asyncRotate) getBf() []byte {
 
 func (a *asyncRotate) run() {
 
+	tick := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case buf := <-a.buf:
 			a.w.Write(buf)
 			a.bp.Put(buf)
 
-		default:
+		case <-tick.C:
 			a.w.Flush()
 
-			buf := <-a.buf
-			a.w.Write(buf)
-			a.bp.Put(buf)
 		}
 	}
 }
+
+var (
+	flushCount = atomic.Int64{}
+)
 
 var (
 	logBufferNIl = expvar.NewInt("log_write_buffer_full")
